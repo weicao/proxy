@@ -385,13 +385,14 @@ front_process(Client, BackAddress, BackPort) ->
             {ok, proxy, Endpoint} ->
                 {ok, Back} = front_get_back(BackAddress, BackPort),
                 info ! {insert, {Back, #info{status="已连接",actived_at=unix_timestamp(), port=Back, front=Client}}},
-                case Endpoint of
+                AddressStr = case Endpoint of
                     <<?IPV4:8, Address:32, _Port/binary>> ->
-                        AddressStr = inet_parse:ntoa(list_to_tuple(binary_to_list(<<Address:32>>))),
-                        info ! {update, {Back, address, AddressStr}};
+                        inet_parse:ntoa(list_to_tuple(binary_to_list(<<Address:32>>)));
                     <<?DOMAIN:8, DomainLen:8, DomainBin:DomainLen/bytes, _Port/binary>> ->
-                        info ! {update, {Back, address, binary_to_list(DomainBin)}}
+                        binary_to_list(DomainBin)
                 end,
+                io:format("access ~p ~n", [AddressStr]),
+                info ! {update, {Back, address, AddressStr}},
                 try
                     flip_send(Back, Endpoint),
 
