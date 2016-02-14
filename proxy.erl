@@ -381,7 +381,6 @@ front_accept(Socket, BackAddress, BackPort) ->
 front_process(Client, BackAddress, BackPort) ->
     try
         From = self(),
-
         case front_socks5_handshake(Client) of
             {ok, proxy, Endpoint} ->
                 {ok, Back} = front_get_back(BackAddress, BackPort),
@@ -449,7 +448,10 @@ front_close_ports(Client, Num) ->
 
 %% 前端完成 socks5 协议的握手，始终立刻返回“成功”。避免二次请求节约时间。
 front_socks5_handshake(Client) ->
+    {ok, {{Ip1, Ip2, Ip3, Ip4}, _}} = inet:peername(Client),
     {ok, <<Version:8, Nmethods:8>>} = gen_tcp:recv(Client, 2),
+    io:format("new client ~p.~p.~p.~p, version ~p ~n", [Ip1, Ip2, Ip3, Ip4, Version]),
+
     case Version of
         ?GET_INFO ->
             {ok, get_info};
